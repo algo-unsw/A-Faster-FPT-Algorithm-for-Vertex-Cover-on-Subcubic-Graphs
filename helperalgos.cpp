@@ -23,18 +23,6 @@ bool cycleMatch(const Graph &g, int l1, int l2, int min, int max) // return true
         std::swap(l1, l2);
     std::set<int> edges;
     auto res = g.findCycles(l2);
-    // for (auto [k, v] : res)
-    // {
-    //     printf("%d %d\n", k, v.size());
-    //     for (auto x : v)
-    //     {
-    //         for (auto y : x)
-    //         {
-    //             printf("%d ", g.edge[y].a);
-    //         }
-    //         printf("\n");
-    //     }
-    // }
     for (int i = 0; i < l1; ++i)
     {
         assert(res.count(i) == 0);

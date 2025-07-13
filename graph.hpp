@@ -33,8 +33,8 @@
 using std::string, std::get, std::pair, std::tuple, std::vector, std::unordered_map, std::unordered_set, std::to_string;
 extern std::unordered_map<string, int> vertexCoverSize;
 extern FILE *outputfile;
-extern double alpha, beta1, beta2, beta3, beta;
-string bitsetToString(SETWIDTH x, int n = 0);
+extern double alpha, beta[10];
+
 enum SimplifyType
 {
     NotSimplified = 0,
@@ -85,11 +85,11 @@ struct SimplifyInfo
 extern SimplifyInfo ignoreInfo;
 struct Measure
 {
-    int k, n, n3, n2, n1;
-    Measure(int k, int n, int n3, int n2, int n1) : k(k), n(n), n3(n3), n2(n2), n1(n1) {}
+    int k, n5, n4, n3, n2, n1;
+    Measure(int k, int n5, int n4, int n3, int n2, int n1) : k(k), n5(n5), n4(n4), n3(n3), n2(n2), n1(n1) {}
     double cost() const
     {
-        return pow(2, alpha * k + beta * n + beta3 * n3 + beta2 * n2 + beta1 * n1);
+        return pow(2, alpha * k + beta[5] * n5 + beta[4] * n4 + beta[3] * n3 + beta[2] * n2 + beta[1] * n1);
     }
 };
 class Graph
@@ -102,6 +102,18 @@ public:
     {
         int a, b, next;
     } edge[MAXV * MAXDEGREE + 2];
+    // bool operator==(const Graph &g) const
+    // {
+    //     if (n != g.n)
+    //         return false;
+    //     if (memcmp(head, g.head, sizeof(int) * n) != 0)
+    //         return false;
+    //     if (memcmp(edge, g.edge, sizeof(Edge) * _edge) != 0)
+    //         return false;
+    //     if (memcmp(remain, g.remain, sizeof(int) * n) != 0)
+    //         return false;
+    //     return true;
+    // }
     // constructor
     Graph(PropertySet s = 0) : state(s), _edge(1), n(0) {}
     // core

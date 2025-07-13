@@ -12,7 +12,7 @@ FILE *outputfile;
 std::unordered_map<string, int> vertexCoverSize;
 std::shared_mutex vertexCoverSizeMutex;
 SimplifyInfo ignoreInfo;
-double alpha = 1, beta3 = 0, beta1 = 0, beta2 = 0, beta = 0;
+double alpha = 1, beta[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 SETWIDTH arrayInsert(SETWIDTH x, SETWIDTH positions)
 {
@@ -24,7 +24,7 @@ SETWIDTH arrayInsert(SETWIDTH x, SETWIDTH positions)
     }
     return x;
 }
-string bitsetToString(SETWIDTH x, int n)
+string bitsetToString(SETWIDTH x, int n = 0)
 {
     string ans;
     while (x || n > 0)
@@ -178,9 +178,7 @@ inline string Graph::isolabel() const
     }
 
     graph canong[n * m];
-    {
-        densenauty(g, lab, ptn, orbits, &options, &stats, m, n, canong);
-    }
+    densenauty(g, lab, ptn, orbits, &options, &stats, m, n, canong);
     string s;
     int remain2[MAXV], oldtonew[MAXV];
     for (int i = 0; i < n; ++i)
@@ -216,7 +214,6 @@ inline string Graph::isolabel() const
     }
     return id + s;
 }
-int tot = 0;
 Measure applyBranch(const Graph &before, SETWIDTH branch)
 {
     Graph after = before;
@@ -248,7 +245,8 @@ Measure applyBranch(const Graph &before, SETWIDTH branch)
         if (after.degree(i) == 1 && after.remain[i] == 1)
             ++c;
     }
-    int n3 = after.count_n(3) - before.count_n(3),
+    int n4 = after.count_n(4) - before.count_n(4),
+        n3 = after.count_n(3) - before.count_n(3),
         n2 = after.count_n(2) - before.count_n(2), n1 = after.count_n(1) - before.count_n(1), dn = after.n - before.n;
     // below code only work when beta1=0.5beta2
     int adj = d + 2 * e + std::min(f, a + 2 * b + c);
@@ -263,7 +261,7 @@ Measure applyBranch(const Graph &before, SETWIDTH branch)
     }
     n1 -= adj;
 
-    return Measure(k, dn, n3, n2, n1);
+    return Measure(k, 0, n4, n3, n2, n1);
 }
 inline bool Graph::evaluateBranch(
     SETWIDTH branch,
@@ -272,7 +270,6 @@ inline bool Graph::evaluateBranch(
     unordered_map<SETWIDTH, pair<vector<bool>, Measure>> &record,
     SETWIDTH guide) const
 {
-    int start = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     vector<bool> success;
 
     double cost = 0;
@@ -286,7 +283,6 @@ inline bool Graph::evaluateBranch(
     {
         guideSuccess = &record.at(guide).first;
     }
-    int mid = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     for (int i = 0; i < boundary.size(); ++i)
     {
         if (guideSuccess && !(*guideSuccess)[i])
@@ -298,7 +294,6 @@ inline bool Graph::evaluateBranch(
             VCSizeAfterDelete[b] = g.solveVertexCover();
         }
         int withBoundaryVertexCoverSize = VCSizeAfterDelete[b];
-        // int withBoundaryVertexCoverSize = VCSizeAfterDelete[b] + countBit(b);
         SETWIDTH deleteSet = branch & ~b;
         if (deleteSet == 0)
         {
@@ -311,7 +306,6 @@ inline bool Graph::evaluateBranch(
             VCSizeAfterDelete[deleteSet | b] = g.solveVertexCover();
         }
         int currentVertexCoverSize = VCSizeAfterDelete[deleteSet | b] + countBit(deleteSet);
-        // int currentVertexCoverSize = VCSizeAfterDelete[deleteSet | b] + countBit(b) + countBit(deleteSet);
         if (currentVertexCoverSize == withBoundaryVertexCoverSize)
         {
             success[i] = true;
@@ -321,11 +315,9 @@ inline bool Graph::evaluateBranch(
             fail = 1;
         }
     }
-    int end = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     record.emplace(branch, std::make_pair(success, measure));
     return fail == 0;
 }
-int sumt1, sumt2;
 bool branchDfs(
     SETWIDTH branch,
     const SETWIDTH bottom,
@@ -421,7 +413,7 @@ double Graph::tryBranching(double eps, vector<tuple<vector<bool>, Measure, SETWI
     for (SETWIDTH i = mask;; i = (i - 1) & mask) // boundary
     {
         int VC = (VCSizeAfterDelete.count(i) ? VCSizeAfterDelete[i] : VCSizeAfterDelete[i] = deleteVertexCopy(i).solveVertexCover()) + countBit(i);
-        for (SETWIDTH j = i, del = lowbit(j); j; j -= del, del = lowbit(j))
+        for (SETWIDTH j = i, del = lowbit(j); j; j ^= del, del = lowbit(j))
         {
             int VC2 = (VCSizeAfterDelete.count(i ^ del) ? VCSizeAfterDelete[i ^ del] : VCSizeAfterDelete[i ^ del] = deleteVertexCopy(i ^ del).solveVertexCover()) + countBit(i ^ del);
             if (VC == VC2)
@@ -527,7 +519,7 @@ double Graph::tryBranching(double eps, vector<tuple<vector<bool>, Measure, SETWI
             branchDfs(branch, branch, *this, topNodes, visitedBranch, leveledBranch, boundary, VCSizeAfterDelete, currentResult);
         }
     }
-    int mid = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    int mid2 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     vector<std::tuple<vector<bool>, Measure, SETWIDTH>> filteredResult, filteredResult2;
     if (currentResult.size() == 0)
         return 10;
@@ -542,9 +534,9 @@ double Graph::tryBranching(double eps, vector<tuple<vector<bool>, Measure, SETWI
         idx[i] = i;
     std::stable_sort(idx.begin(), idx.end(), [&](int a, int b)
                      { 
-                    if(fabs(get<1>(filteredResult[a]).cost() - get<1>(filteredResult[b]).cost()) < 1e-6)
+                    if(fabs(get<1>(filteredResult[a]).cost() - get<1>(filteredResult[b]).cost()) < 1e-6)// cost same
                     {
-                        if (get<0>(filteredResult[a]) == get<0>(filteredResult[b]))
+                        if (get<0>(filteredResult[a]) == get<0>(filteredResult[b])) //requirement same
                         {
                             if(countBit(get<2>(filteredResult[a])) == countBit(get<2>(filteredResult[b])))
                             {
@@ -600,8 +592,6 @@ double Graph::tryBranching(double eps, vector<tuple<vector<bool>, Measure, SETWI
     }
 
     int end = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    sumt1 += mid - start;
-    sumt2 += end - mid;
     return lpRes;
 }
 inline Graph Graph::deleteVertexCopy(SETWIDTH x) const
@@ -714,19 +704,18 @@ int Graph::solveVertexCover(bool checkSimplify) const
 string Graph::toReadableString() const
 {
     std::stringstream ss;
-    ss << "n=" << n << " m=" << _edge / 2 << std::endl;
+    ss << n << " " << _edge / 2 << std::endl;
+    for (int i = 0; i < n; ++i)
+    {
+        ss << remain[i];
+    }
+    ss << std::endl;
     for (int i = 2; i <= _edge; i += 2)
     {
         if (edge[i].a < edge[i].b)
             ss << edge[i].a << " " << edge[i].b << std::endl;
         else
             ss << edge[i].b << " " << edge[i].a << std::endl;
-    }
-    ss << "Incomplete Edges:" << std::endl;
-    for (int i = 0; i < n; ++i)
-    {
-        if (remain[i] > 0)
-            ss << i << ": " << remain[i] << std::endl;
     }
     return ss.str();
 }
@@ -1292,7 +1281,6 @@ bool Graph::subgraphMatch(const unordered_set<std::string> &solved)
 
 int Graph::minimumCircleLength() const
 {
-    // int e[MAXV][MAXV], dis[MAXV][MAXV];
     int **e = new int *[n], **dis = new int *[n];
     for (int i = 0; i < n; ++i)
     {
@@ -1429,53 +1417,4 @@ std::unordered_map<int, std::set<std::vector<int>>> Graph::findCycles(int length
         }
     }
     return ans2;
-}
-vector<Graph> Graph::split() const
-{
-    vector<Graph> ans;
-    int f[MAXV] = {0};
-    for (int i = 0; i < n; ++i)
-        f[i] = i;
-    for (int i = 2; i <= _edge; i += 2)
-    {
-        int a = edge[i].a, b = edge[i].b;
-        merge(a, b, f);
-    }
-    int split = 1;
-    for (int i = 0; i < n; ++i)
-    {
-        if (find(i, f) != find(0, f))
-            split = 0;
-    }
-    if (!split)
-    {
-        ans.push_back(*this);
-        return ans;
-    }
-    for (int i = 0; i < n; ++i)
-    {
-        if (find(i, f) != i)
-            continue;
-        Graph g;
-        int oldToNew[MAXV];
-        memset(oldToNew, -1, sizeof(oldToNew));
-        for (int j = 0; j < n; ++j)
-        {
-            if (find(j, f) == i)
-            {
-                oldToNew[j] = g.n;
-                g.addVertex(g.n, degree(j));
-            }
-        }
-        for (int j = 2; j <= _edge; j += 2)
-        {
-            int a = edge[j].a, b = edge[j].b;
-            if (find(a, f) == i && find(b, f) == i)
-            {
-                g.link(oldToNew[a], oldToNew[b]);
-            }
-        }
-        ans.push_back(g);
-    }
-    return ans;
 }

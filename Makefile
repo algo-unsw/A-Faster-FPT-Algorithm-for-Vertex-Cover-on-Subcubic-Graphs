@@ -8,7 +8,7 @@ SUBDIRS := nauty alglib-cpp
 CC = clang++
 
 # Compiler flags
-CFLAGS = -w -g -O3 -std=c++2b -march=native -fno-exceptions -flto -funroll-loops -pthread #-fsanitize=address
+CFLAGS = -w -g -O3 -std=c++2b -march=native -flto -funroll-loops -pthread #-fsanitize=address -fno-exceptions
 
 # Linker flags
 LDFLAGS = -I./nauty
@@ -33,10 +33,6 @@ all: $(SUBDIRS) $(EXECS)
 $(SUBDIRS):
 	$(MAKE) -C $@
 
-# graph.o: graph.cpp $(HDRS) 
-# 	$(CC) $(CFLAGS) -c -o $@ $< $(LDFLAGS)
-# helperalgos.o: helperalgos.cpp $(HDRS) 
-# 	$(CC) $(CFLAGS) -c -o $@ $< $(LDFLAGS)
 # Compile source files
 main: main.cpp $(SRCS) $(HDRS)
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) $(SRCS) -D MAXDEGREE=3
@@ -47,7 +43,3 @@ clean:
 		$(MAKE) -C $$dir clean; \
 	done
 	rm -f $(EXECS) *.o
-
-
-
-

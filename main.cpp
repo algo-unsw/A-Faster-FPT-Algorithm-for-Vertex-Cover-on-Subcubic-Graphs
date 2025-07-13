@@ -1,4 +1,3 @@
-#define _CRT_SECURE_NO_DEPRECATE
 #include <stdio.h>
 #include <iostream>
 #include <string>
@@ -15,53 +14,6 @@
 
 #include "utils.hpp"
 FILE *optfile;
-
-void showHelp()
-{
-    std::cout << "Usage: ./main [options]\n";
-    std::cout << "Options:\n";
-    std::cout << "--exe=<sub-space name>    Solve specific sub-space\n";
-    std::cout << "-o=<filename>             Save generated rules to file\n";
-    std::cout << "--alpha=<value>           Set the alpha parameter\n";
-    std::cout << "--beta1=<value>           Set the beta1 parameter (default: -alpha/4)\n";
-    std::cout << "--beta2=<value>           Set the beta2 parameter (default: -alpha/2)\n";
-    std::cout << "--beta=<value>            Set the beta parameter (default: 0)\n";
-    std::cout << "-p=true/false             Enable or disable multi-threading (default: false)\n";
-    std::cout << "-h, --help                Show this help message\n";
-}
-void fillDefaultParams(std::map<std::string, std::string> &params)
-{
-    // params["--alpha"] = "0";
-    params["--beta1"] = "0";
-    params["--beta2"] = "0";
-    params["--beta"] = "0";
-    params["-p"] = "false";
-}
-void parseArgs(int argc, char *argv[], std::map<std::string, std::string> &params)
-{
-    for (int i = 1; i < argc; ++i)
-    {
-        std::string arg = argv[i];
-        if (arg == "--help" || arg == "-h")
-        {
-            showHelp();
-            exit(0);
-        }
-        size_t pos = arg.find('=');
-        if (pos != std::string::npos)
-        {
-            std::string key = arg.substr(0, pos);
-            params[key] = arg.substr(pos + 1);
-            printf("%s=%s\n", key.c_str(), params[key].c_str());
-        }
-    }
-    if (params.count("--alpha") == 0)
-    {
-        std::cerr << "Error: --alpha parameter is required\n";
-        showHelp();
-        exit(1);
-    }
-}
 long getPeakRSS()
 {
     struct rusage rusage;
@@ -70,25 +22,7 @@ long getPeakRSS()
 }
 int main(int argc, char *argv[])
 {
-    // printf("%s\n%s\n", t2(31).toString().c_str(), t3(22).toString().c_str());
-    std::map<std::string, std::string> params;
-    fillDefaultParams(params);
-    parseArgs(argc, argv, params);
-    alpha = stod(params["--alpha"]);
-    beta1 = stod(params["--beta1"]);
-    beta2 = stod(params["--beta2"]);
-    // beta3 = stod(params["--beta3"]);
-    beta = stod(params["--beta"]);
-    assert(MAXDEGREE == 3);
-    if (beta1 == 0)
-        beta1 = -alpha / 4;
-    if (beta2 == 0)
-        beta2 = -alpha / 2;
-    if (params["-o"] != "")
-        optfile = fopen(params["-o"].c_str(), "w");
-    else
-        optfile = fopen("/dev/null", "w");
-    printf("Alpha=%lf Beta1=%lf Beta2=%lf Beta3=%lf Beta=%lf\n", alpha, beta1, beta2, beta3, beta);
+    auto params = init(argc, argv);
     bool multiThread = params["-p"] == "true";
     std::vector<std::pair<int, int>> info;
     std::map<string, Graph> gmap;
@@ -100,7 +34,6 @@ int main(int argc, char *argv[])
     g232.link(0, 1);
     g232.link(1, 2);
     gmap["g232"] = g232;
-    // solve1({g232});
 
     Graph bc2333 = Graph(Property::NO_232);
     bc2333.addVertex(0, 2);
@@ -112,7 +45,6 @@ int main(int argc, char *argv[])
     bc2333.link(2, 3);
     bc2333.link(3, 0);
     gmap["bc2333"] = bc2333;
-    // solve1({bc2333});
 
     Graph bc23333 = Graph(Property::NO_232 | Property::NO_cycle2333);
     bc23333.addVertex(0, 2);
@@ -126,7 +58,7 @@ int main(int argc, char *argv[])
     bc23333.link(3, 4);
     bc23333.link(4, 0);
     gmap["bc23333"] = bc23333;
-    // solve1({bc2333333});
+
     Graph bc233333 = Graph(Property::NO_232 | Property::NO_cycle2333 | Property::NO_cycle23333);
     bc233333.addVertex(0, 2);
     bc233333.addVertex(1, 3);
@@ -145,7 +77,6 @@ int main(int argc, char *argv[])
     Graph g2 = Graph(Property::NO_232 | Property::NO_cycle2333 | Property::NO_cycle23333 | Property::NO_cycle233333);
     g2.addVertex(0, 2);
     gmap["g2"] = g2;
-    // solve1({g2});
 
     Graph c3 = Graph(Property::NO_D2);
     c3.addVertex(0, 3);
@@ -155,7 +86,6 @@ int main(int argc, char *argv[])
     c3.link(0, 2);
     c3.link(1, 2);
     gmap["c3"] = c3;
-    // solve1({c3});
 
     Graph c4 = Graph(Property::NO_D2 | Property::NO_D3cycle3);
     c4.addVertex(0, 3);
@@ -167,7 +97,6 @@ int main(int argc, char *argv[])
     c4.link(2, 3);
     c4.link(0, 3);
     gmap["c4"] = c4;
-    // solve1({c4});
 
     Graph c551 = Graph(Property::NO_D2 | Property::NO_D3cycle3 | Property::NO_D3cycle4);
     c551.addVertex(0, 3);
@@ -188,7 +117,6 @@ int main(int argc, char *argv[])
     c551.link(6, 7);
     c551.link(0, 7);
     gmap["c551"] = c551;
-    // solve1({c551});
 
     Graph c571 = Graph(Property::NO_D2 | Property::NO_D3cycle3 | Property::NO_D3cycle4 | Property::NO_D3cycle551);
     c571.addVertex(0, 3);
@@ -213,7 +141,6 @@ int main(int argc, char *argv[])
     c571.link(8, 9);
     c571.link(0, 9);
     gmap["c571"] = c571;
-    // solve1({c571});
 
     Graph c5 = Graph(Property::NO_D2 | Property::NO_D3cycle3 | Property::NO_D3cycle4 | Property::NO_D3cycle551 | Property::NO_D3cycle571);
     c5.addVertex(0, 3);
@@ -227,7 +154,6 @@ int main(int argc, char *argv[])
     c5.link(3, 4);
     c5.link(0, 4);
     gmap["c5"] = c5;
-    // solve1({c5});
 
     Graph c661 = Graph(Property::NO_D2 | Property::NO_D3cycle3 | Property::NO_D3cycle4 | Property::NO_D3cycle5);
     c661.addVertex(0, 3);
@@ -252,7 +178,6 @@ int main(int argc, char *argv[])
     c661.link(7, 6);
     c661.link(0, 6);
     gmap["c661"] = c661;
-    // solve1({c661});
 
     Graph c6 = Graph(Property::NO_D2 | Property::NO_D3cycle3 | Property::NO_D3cycle4 | Property::NO_D3cycle5 | Property::NO_D3cycle661);
     c6.addVertex(0, 3);
@@ -268,7 +193,6 @@ int main(int argc, char *argv[])
     c6.link(4, 5);
     c6.link(0, 5);
     gmap["c6"] = c6;
-    // solve1({c6});
 
     Graph c773 = Graph(Property::NO_D2 | Property::NO_D3cycle3 | Property::NO_D3cycle4 | Property::NO_D3cycle5 | Property::NO_D3cycle6);
     c773.addVertex(0, 3);
@@ -293,7 +217,6 @@ int main(int argc, char *argv[])
     c773.link(8, 9);
     c773.link(3, 9);
     gmap["c773"] = c773;
-    // solve1({c773});
 
     Graph c772 = Graph(Property::NO_D2 | Property::NO_D3cycle3 | Property::NO_D3cycle4 | Property::NO_D3cycle5 | Property::NO_D3cycle6 | Property::NO_D3cycle773);
     c772.addVertex(0, 3);
@@ -320,7 +243,6 @@ int main(int argc, char *argv[])
     c772.link(9, 10);
     c772.link(2, 10);
     gmap["c772"] = c772;
-    // solve1({c772});
 
     Graph c771 = Graph(Property::NO_D2 | Property::NO_D3cycle3 | Property::NO_D3cycle4 | Property::NO_D3cycle5 | Property::NO_D3cycle6 | Property::NO_D3cycle772 | Property::NO_D3cycle773);
     c771.addVertex(0, 3);
@@ -366,7 +288,6 @@ int main(int argc, char *argv[])
     c7.link(5, 6);
     c7.link(0, 6);
     gmap["c7"] = c7;
-    // solve1({c7});
 
     Graph c8 = Graph(Property::NO_D2 | Property::NO_D3cycle3 | Property::NO_D3cycle4 | Property::NO_D3cycle5 | Property::NO_D3cycle6 | Property::NO_D3cycle7);
     c8.addVertex(0, 3);
@@ -386,7 +307,6 @@ int main(int argc, char *argv[])
     c8.link(6, 7);
     c8.link(0, 7);
     gmap["c8"] = c8;
-    // solve1({c8});
 
     Graph g3 = Graph(Property::NO_D2 | Property::NO_D3cycle3 | Property::NO_D3cycle4 | Property::NO_D3cycle5 | Property::NO_D3cycle6 | Property::NO_D3cycle7 | Property::NO_D3cycle8);
     g3.addVertex(0, 3);
@@ -410,9 +330,9 @@ int main(int argc, char *argv[])
     }
     else
         solve3(exe, 1);
-    printf("Alpha=%lf Beta1=%lf Beta2=%lf done\n", alpha, beta1, beta2);
+    printf("Alpha=%lf Beta1=%lf Beta2=%lf Beta3=%lf Beta4=%lf Beta5=%lf done\n", alpha, beta[1], beta[2], beta[3], beta[4], beta[5]);
     printf("Isomorphism Detected=%d\n", isocnt.load());
-    std::cout << "Peak memory usage: " << getPeakRSS() / 1000000.0 << " MB" << std::endl; // The unit may not correct depending on the system
+    std::cout << "Peak memory usage: " << getPeakRSS() / 1000000.0 << " MB" << std::endl;
     printf("#Vertex Cover: %lu\n", vertexCoverSize.size());
     return 0;
 }

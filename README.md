@@ -92,7 +92,3 @@ The following abbreviations are used in the program to specify the subspace to g
 17. c7: Contains a 7-cycle, excluding all previous subspaces.
 18. c8: Contains an 8-cycle, excluding all previous subspaces.
 19. g3: Contains no structures defined by the previous subspaces.
-
-### Pre-computed results
-
-The set of local configurations and corresponding rules for $\alpha=0.178$ can be found at [this link](https://mega.nz/folder/nFdBxYYY#DB-B_O0q_abh0lCT2bkWkA), which gives a randomized algorithm for vertex cover on subcubic graphs in $O(1.13132^k)$ time. The online drive files include both terminal output and generated rules. (Note that there are more than $10^7$ rules generated, the file is too large to be uploaded to GitHub)
